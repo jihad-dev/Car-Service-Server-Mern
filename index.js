@@ -1,9 +1,9 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config();
 
 // middleware
@@ -27,7 +27,6 @@ async function run() {
     const usersCollection = client.db("CarServiceDb").collection("users");
     const cartCollection = client.db("CarServiceDb").collection("cart");
 
-
     // JWT Authorization //
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -50,12 +49,6 @@ async function run() {
         next();
       });
     };
-
-
-
-
-
-
 
     // GET ALL Services data //
     app.get("/services", async (req, res) => {
@@ -96,6 +89,28 @@ async function run() {
       let email = req.query.email;
       const query = { email: email };
       const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+    // Delete the order item //
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Make Admin API //
+
+    app.patch("/users/admin/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      // Specify the update to set a value for the plot field
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
